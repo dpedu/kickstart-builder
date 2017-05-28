@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <style>
+            textarea {
+                width: 100%;
+                height: 600px;
+            }
+        </style>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha.2/css/bootstrap.min.css" type="text/css"/>
+        <title>Kickstart Builder</title>
+    </head>
+    <body>
+        <div class="container">
+            <h1 class="display-4">Ubuntu-Kickstart Builder</h1>
+            <p>Create bootable Ubuntu ISOs pre-configured with <a href="https://help.ubuntu.com/16.04/installation-guide/i386/ch04s06.html" target="_blank">Kickstart</a>.</p>
+            <div class="list-group">
+              <span class="list-group-item list-group-item-danger"> Warning, these default configs will format drives without prompting! </span>
+            </div>
+            <br /><br />
+            <form action="/getIso" method="post">
+                <fieldset class="form-group">
+                    <legend>Base ISO:</legend>
+                    <select name="base_image" class="c-select">
+                        {% for iso in ISOS: %}
+                        <option value="{{ iso }}">{{ iso }}</option>
+                        {% endfor %}
+                    </select>
+                </fieldset>
+                <br />
+                <fieldset class="form-group">
+                    <legend>Menu Entries</legend>
+                    <p>Selectable options displayed on the boot menu.</p>
+                    <textarea class="form-control" name="menu_entries">{{ MENU_ENTRIES }}</textarea>
+                </fieldset>
+                <br />
+                <fieldset class="form-group">
+                    <legend>Seed Content</legend>
+                    <p>Options to pass to the ubuntu installer. Install path: cdrom:/ks.cfg</p>
+                    <textarea class="form-control" name="seed_content">{{ SEED_CONTENT }}</textarea>
+                </fieldset>
+                <br />
+                <fieldset class="form-group">
+                    <legend>Kickstart content</legend>
+                    <p>Higher-level Kickstart installation options.</p>
+                    <textarea class="form-control" name="kickstart">{{ KS_CONTENT }}</textarea>
+                </fieldset>
+                <br />
+                <input type="submit" value="Download!" class="btn btn-success">
+                <br /><br />
+            </div>
+        </form>
+    </body>
+</html>

@@ -1,0 +1,64 @@
+#System language
+lang en_US
+#Language modules to install
+langsupport en_US
+#System keyboard
+keyboard us
+#System mouse
+mouse
+#System timezone
+timezone America/Los_Angeles
+#Root password
+rootpw chewy2
+#Initial user
+user --disabled
+#Reboot after installation
+reboot
+#Use text mode install
+text
+#Install OS instead of upgrade
+install
+#Use CDROM installation media
+cdrom
+#System bootloader configuration
+bootloader --location=mbr
+#Clear the Master Boot Record
+zerombr yes
+#Partition clearing information
+clearpart --all --initlabel
+#Disk partitioning information
+part / --fstype ext4 --size 1 --grow
+#System authorization infomation
+auth  --useshadow  --enablemd5
+#Network information
+network --bootproto=dhcp --device=eth0
+#Firewall configuration
+firewall --disabled
+#Do not configure the X Window System
+skipx
+
+%packages
+openssh-server
+vim
+htop
+%post
+# Add arbitrary shell code to execute in the installer environment below here
+
+# run upgrades at first boot
+touch /etc/firstboot
+sed -i -e "s/exit\s*0//" /etc/rc.local
+cat <<EOT >> /etc/rc.local
+# Below this line can be removed after first boot
+if [ -f /etc/firstboot ] ; then
+    set +e
+    sed -i -E "s/^PermitRootLogin .+/PermitRootLogin yes/" /etc/ssh/sshd_config
+    apt-get update
+    apt-get dist-upgrade -y
+    # Install new kernel on 14.04
+    #apt-get install -y linux-generic-lts-xenial open-vm-tools
+    # revert to upstart on 16.04
+    #apt-get install -y  upstart-sysv
+    rm /etc/firstboot
+    reboot
+fi
+EOT
