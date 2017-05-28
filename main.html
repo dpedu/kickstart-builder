@@ -9,6 +9,7 @@
             }
         </style>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha.2/css/bootstrap.min.css" type="text/css"/>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha.6/css/bootstrap-grid.min.css" type="text/css"/>
         <title>Kickstart Builder</title>
     </head>
     <body>
@@ -19,15 +20,30 @@
               <span class="list-group-item list-group-item-danger"> Warning, these default configs will format drives without prompting! </span>
             </div>
             <br /><br />
-            <form action="/getIso" method="post">
-                <fieldset class="form-group">
-                    <legend>Base ISO:</legend>
-                    <select name="base_image" class="c-select">
-                        {% for iso in ISOS: %}
-                        <option value="{{ iso }}">{{ iso }}</option>
-                        {% endfor %}
-                    </select>
-                </fieldset>
+            <form action="/process" method="post">
+               <div class="row">
+                    <div class="col">
+                        <fieldset class="form-group">
+                            <legend>Base ISO:</legend>
+                            <select name="base_image" class="c-select">
+                                {% for iso in ISOS: %}
+                                <option value="{{ iso }}">{{ iso }}</option>
+                                {% endfor %}
+                            </select>
+                        </fieldset>
+                    </div>
+                    <div class="col">
+                        <fieldset class="form-group">
+                            <legend>Sample configs:</legend>
+                            <select name="sample" class="c-select">
+                                {% for sample in SAMPLES: %}
+                                <option value="{{ sample }}"{% if current_sample == sample %} selected{% endif %}>{{ sample }}</option>
+                                {% endfor %}
+                            </select>
+                            <input type="submit" value="Load" name="action" class="btn btn-warning" onclick="return confirm('Warning: loading a new template will abandon changes made below.')">
+                        </fieldset>
+                    </div>
+                </div>
                 <br />
                 <fieldset class="form-group">
                     <legend>Menu Entries</legend>
@@ -47,7 +63,7 @@
                     <textarea class="form-control" name="kickstart">{{ KS_CONTENT }}</textarea>
                 </fieldset>
                 <br />
-                <input type="submit" value="Download!" class="btn btn-success">
+                <input type="submit" value="Build" name="action" class="btn btn-success">
                 <br /><br />
             </div>
         </form>

@@ -12,26 +12,42 @@ class ISOserver(object):
         self.data_dir = "./iso_raws"
         self.iso_selection = [i for i in os.listdir(self.data_dir) if not i.startswith(".")]
         self.builder_semaphores = {i: Semaphore() for i in self.iso_selection}
-        self._load_template()
+        self._load_templates()
 
-    def _load_template(self):
-        with open("./main.html") as template_f, \
-                open("./menu.default") as menu_f, \
-                open("./seed.default") as seed_f, \
-                open("./ks.default") as ks_f:
-            self.template = Environment().from_string(template_f.read()).render(MENU_ENTRIES=menu_f.read(),
-                                                                                SEED_CONTENT=seed_f.read(),
-                                                                                KS_CONTENT=ks_f.read(),
-                                                                                ISOS=self.iso_selection)
+    def _load_templates(self):
+        with open("./main.html") as template_f:
+            self.template = Environment().from_string(template_f.read())
+
+        samples = os.listdir("samples")
+        self.samples = {}
+
+        for item in samples:
+            self.samples[item] = {}
+            with open(os.path.join("samples", item, "menu.default")) as f:
+                self.samples[item]["menu"] = f.read()
+            with open(os.path.join("samples", item, "seed.default")) as f:
+                self.samples[item]["seed"] = f.read()
+            with open(os.path.join("samples", item, "ks.default")) as f:
+                self.samples[item]["ks"] = f.read()
 
     @cherrypy.expose
-    def index(self, refresh=False):
-        if refresh:
-            self._load_template()
-        yield(self.template)
+    def index(self, refresh=False, sample="default"):
+        if refresh or "REFRESH" in os.environ:
+            self._load_templates()
+
+        yield(self.template.render(ISOS=self.iso_selection,
+                                   SAMPLES=self.samples.keys(),
+                                   MENU_ENTRIES=self.samples[sample]["menu"],
+                                   SEED_CONTENT=self.samples[sample]["seed"],
+                                   KS_CONTENT=self.samples[sample]["ks"],
+                                   current_sample=sample))
 
     @cherrypy.expose
-    def getIso(self, menu_entries, seed_content, kickstart, base_image):
+    def process(self, menu_entries, seed_content, kickstart, base_image, action, sample):
+        if action == "Load":
+            assert sample in self.samples.keys()
+            raise cherrypy.HTTPRedirect("/?sample={}".format(sample))
+
         assert base_image in self.iso_selection
 
         cherrypy.response.headers['Content-Type'] = 'application/octet-stream'
@@ -40,7 +56,7 @@ class ISOserver(object):
 
         builder = self.isoBuilder(menu_entries, seed_content, kickstart, base_image)
         return builder()
-    getIso._cp_config = {'response.stream': True}
+    process._cp_config = {'response.stream': True}
 
     def isoBuilder(self, menu_entries, seed_content, kickstart, base_image):
         datadir = os.path.join(self.data_dir, base_image)

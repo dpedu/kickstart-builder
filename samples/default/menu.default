@@ -4,11 +4,6 @@ label install
   kernel /install/vmlinuz
   append  file=/cdrom/preseed/ubuntu-server.seed vga=788 initrd=/install/initrd.gz quiet --
 
-label webseed
-  menu label ^Install from web seed
-  kernel /install/vmlinuz
-  append initrd=/install/initrd.gz ks=http://ubuntuseed/webseed/webseed/ks.cfg url=http://ubuntuseed/webseed/webseed/ubuntu.seed --
-
 label on_disk_kickstart
   menu label ^Install from kickstart + seed
   kernel /install/vmlinuz
