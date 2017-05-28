@@ -11,6 +11,9 @@
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha.2/css/bootstrap.min.css" type="text/css"/>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha.6/css/bootstrap-grid.min.css" type="text/css"/>
         <title>Kickstart Builder</title>
+        <script type="text/javascript">
+            var fields_dirty = false;
+        </script>
     </head>
     <body>
         <div class="container">
@@ -40,7 +43,7 @@
                                 <option value="{{ sample }}"{% if current_sample == sample %} selected{% endif %}>{{ sample }}</option>
                                 {% endfor %}
                             </select>
-                            <input type="submit" value="Load" name="action" class="btn btn-warning" onclick="return confirm('Warning: loading a new template will abandon changes made below.')">
+                            <input type="submit" value="Load" name="action" class="btn btn-warning" onclick="if(fields_dirty){return confirm('Warning: loading a new template will abandon changes made below.')}; return true">
                         </fieldset>
                     </div>
                 </div>
@@ -55,19 +58,19 @@
                 <fieldset class="form-group">
                     <legend>Menu Entries</legend>
                     <p>Selectable options displayed on the boot menu.</p>
-                    <textarea class="form-control" name="menu_entries">{{ MENU_ENTRIES }}</textarea>
+                    <textarea class="form-control" name="menu_entries" onchange="fields_dirty=true">{{ MENU_ENTRIES }}</textarea>
                 </fieldset>
                 <br />
                 <fieldset class="form-group">
                     <legend>Seed Content</legend>
                     <p>Options to pass to the ubuntu installer. Install path: cdrom:/ks.cfg</p>
-                    <textarea class="form-control" name="seed_content">{{ SEED_CONTENT }}</textarea>
+                    <textarea class="form-control" name="seed_content" onchange="fields_dirty=true">{{ SEED_CONTENT }}</textarea>
                 </fieldset>
                 <br />
                 <fieldset class="form-group">
                     <legend>Kickstart content</legend>
                     <p>Higher-level Kickstart installation options.</p>
-                    <textarea class="form-control" name="kickstart">{{ KS_CONTENT }}</textarea>
+                    <textarea class="form-control" name="kickstart" onchange="fields_dirty=true">{{ KS_CONTENT }}</textarea>
                 </fieldset>
                 <br />
                 <input type="submit" value="Build" name="action" class="btn btn-success">
