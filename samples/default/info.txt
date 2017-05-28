@@ -1,0 +1,1 @@
+A basic automatic install intended for virtual machines. System updates will be installed on the first boot.

@@ -1,0 +1,1 @@
+Identical to the default install, but with LVM for the root filesystem and a separate /boot partition.

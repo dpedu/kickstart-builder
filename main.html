@@ -45,6 +45,13 @@
                     </div>
                 </div>
                 <br />
+                {% if SAMPLE_INFO %}
+                <div class="alert alert-warning" role="alert">
+                    <h4 class="alert-heading">Template information</h4>
+                    <p style="white-space: pre;">{{ SAMPLE_INFO }}</p>
+                </div>
+                <br />
+                {% endif %}
                 <fieldset class="form-group">
                     <legend>Menu Entries</legend>
                     <p>Selectable options displayed on the boot menu.</p>

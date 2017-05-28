@@ -24,11 +24,15 @@ class ISOserver(object):
         for item in samples:
             self.samples[item] = {}
             with open(os.path.join("samples", item, "menu.default")) as f:
-                self.samples[item]["menu"] = f.read()
+                self.samples[item]["MENU_ENTRIES"] = f.read()
             with open(os.path.join("samples", item, "seed.default")) as f:
-                self.samples[item]["seed"] = f.read()
+                self.samples[item]["SEED_CONTENT"] = f.read()
             with open(os.path.join("samples", item, "ks.default")) as f:
-                self.samples[item]["ks"] = f.read()
+                self.samples[item]["KS_CONTENT"] = f.read()
+            info_path = os.path.join("samples", item, "info.txt")
+            if os.path.exists(info_path):
+                with open(os.path.join("samples", item, "info.txt")) as f:
+                    self.samples[item]["SAMPLE_INFO"] = f.read()
 
     @cherrypy.expose
     def index(self, refresh=False, sample="default"):
@@ -37,10 +41,8 @@ class ISOserver(object):
 
         yield(self.template.render(ISOS=self.iso_selection,
                                    SAMPLES=self.samples.keys(),
-                                   MENU_ENTRIES=self.samples[sample]["menu"],
-                                   SEED_CONTENT=self.samples[sample]["seed"],
-                                   KS_CONTENT=self.samples[sample]["ks"],
-                                   current_sample=sample))
+                                   current_sample=sample,
+                                   **self.samples[sample]))
 
     @cherrypy.expose
     def process(self, menu_entries, seed_content, kickstart, base_image, action, sample):
