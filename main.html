@@ -30,7 +30,7 @@
                             <legend>Base ISO:</legend>
                             <select name="base_image" class="c-select">
                                 {% for iso in ISOS: %}
-                                <option value="{{ iso }}">{{ iso }}</option>
+                                <option value="{{ iso }}"{% if BASE_IMAGE == iso %} selected{% endif %}>{{ iso }}</option>
                                 {% endfor %}
                             </select>
                         </fieldset>
@@ -40,7 +40,7 @@
                             <legend>Sample configs:</legend>
                             <select name="sample" class="c-select">
                                 {% for sample in SAMPLES: %}
-                                <option value="{{ sample }}"{% if current_sample == sample %} selected{% endif %}>{{ sample }}</option>
+                                <option value="{{ sample }}"{% if CURRENT_SAMPLE == sample %} selected{% endif %}>{{ sample }}</option>
                                 {% endfor %}
                             </select>
                             <input type="submit" value="Load" name="action" class="btn btn-warning" onclick="if(fields_dirty){return confirm('Warning: loading a new template will abandon changes made below.')}; return true">

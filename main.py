@@ -35,29 +35,31 @@ class ISOserver(object):
                     self.samples[item]["SAMPLE_INFO"] = f.read()
 
     @cherrypy.expose
-    def index(self, refresh=False, sample="default"):
+    def index(self, refresh=False, sample="default", base_image=""):
         if refresh or "REFRESH" in os.environ:
             self._load_templates()
 
         yield(self.template.render(ISOS=self.iso_selection,
                                    SAMPLES=self.samples.keys(),
-                                   current_sample=sample,
+                                   CURRENT_SAMPLE=sample,
+                                   BASE_IMAGE=base_image,
                                    **self.samples[sample]))
 
     @cherrypy.expose
     def process(self, menu_entries, seed_content, kickstart, base_image, action, sample):
-        if action == "Load":
-            assert sample in self.samples.keys()
-            raise cherrypy.HTTPRedirect("/?sample={}".format(sample))
-
         assert base_image in self.iso_selection
 
-        cherrypy.response.headers['Content-Type'] = 'application/octet-stream'
-        cherrypy.response.headers['Content-Description'] = 'File Transfer'
-        cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="{}-custom.iso"'.format(base_image)
+        if action == "Load":
+            assert sample in self.samples.keys()
+            raise cherrypy.HTTPRedirect("/?base_image={}&sample={}".format(base_image, sample))
 
-        builder = self.isoBuilder(menu_entries, seed_content, kickstart, base_image)
-        return builder()
+        elif action == "Build":
+            cherrypy.response.headers['Content-Type'] = 'application/octet-stream'
+            cherrypy.response.headers['Content-Description'] = 'File Transfer'
+            cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="{}-custom.iso"'.format(base_image)
+
+            builder = self.isoBuilder(menu_entries, seed_content, kickstart, base_image)
+            return builder()
     process._cp_config = {'response.stream': True}
 
     def isoBuilder(self, menu_entries, seed_content, kickstart, base_image):
@@ -89,7 +91,6 @@ class ISOserver(object):
             else:
                 self.builder_semaphores[base_image].release()
 
-            print("Done!")
         return output
 
 
