@@ -29,6 +29,11 @@ d-i     grub-installer/timeout  string 2
 # Add the network and tasks oem-config steps by default.
 oem-config      oem-config/steps        multiselect language, timezone, keyboard, user, network, tasks
 
+# Overwrite/remove existing LVMs
+d-i partman-lvm/confirm_nooverwrite boolean true
+d-i partman-lvm/device_remove_lvm boolean true
+d-i partman-lvm/confirm boolean true
+
 # Bypass no swap warning
 d-i partman-basicfilesystems/no_swap boolean false
 

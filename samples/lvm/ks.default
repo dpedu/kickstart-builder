@@ -44,7 +44,7 @@ clearpart --all --initlabel
 part /boot --fstype ext2 --size=500
 part pv.01 --size=1 --grow
 volgroup vg_root pv.01
-logvol  /  --vgname=vg_root  --name=lv_root --grow
+logvol  /  --vgname=vg_root  --name=lv_root  --size 1  --grow
 
 #System authorization infomation
 auth  --useshadow  --enablemd5
