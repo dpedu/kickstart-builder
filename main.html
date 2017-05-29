@@ -23,7 +23,7 @@
               <span class="list-group-item list-group-item-danger"> Warning, these default configs will format drives without prompting! </span>
             </div>
             <br /><br />
-            <form action="/process" method="post">
+            <form action="/process" method="post" enctype="multipart/form-data">
                <div class="row">
                     <div class="col">
                         <fieldset class="form-group">
@@ -73,8 +73,15 @@
                     <textarea class="form-control" name="kickstart" onchange="fields_dirty=true">{{ KS_CONTENT }}</textarea>
                 </fieldset>
                 <br />
+                <fieldset class="form-group">
+                    <legend>User data</legend>
+                    <p>Include an arbitrary file on outputted ISO. This file will be placed on the root of the disk.</p>
+                    <input type="file" name="userdata" onchange="fields_dirty=true"/>
+                </fieldset>
+                <br />
                 <input type="submit" value="Build" name="action" class="btn btn-success">
-                <br /><br />
+                <br />
+                <br />
             </div>
         </form>
     </body>

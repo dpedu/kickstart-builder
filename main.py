@@ -45,8 +45,9 @@ class ISOserver(object):
                                    BASE_IMAGE=base_image,
                                    **self.samples[sample]))
 
+    # @cherrypy.tools.noBodyProcess()
     @cherrypy.expose
-    def process(self, menu_entries, seed_content, kickstart, base_image, action, sample):
+    def process(self, menu_entries, seed_content, kickstart, base_image, action, sample, userdata):
         assert base_image in self.iso_selection
 
         if action == "Load":
@@ -58,12 +59,20 @@ class ISOserver(object):
             cherrypy.response.headers['Content-Description'] = 'File Transfer'
             cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="{}-custom.iso"'.format(base_image)
 
-            builder = self.isoBuilder(menu_entries, seed_content, kickstart, base_image)
+            builder = self.isoBuilder(menu_entries, seed_content, kickstart, base_image, userdata)
             return builder()
     process._cp_config = {'response.stream': True}
 
-    def isoBuilder(self, menu_entries, seed_content, kickstart, base_image):
+    def isoBuilder(self, menu_entries, seed_content, kickstart, base_image, userdata):
         datadir = os.path.join(self.data_dir, base_image)
+
+        userdata_path = None
+
+        if userdata.file:
+            userdata_name = os.path.basename(userdata.filename)
+            userdata_path = os.path.join(datadir, userdata_name)
+            if os.path.exists(userdata_path):
+                raise Exception("File {} already exists".format(userdata_name))
 
         def output():
             self.builder_semaphores[base_image].acquire()
@@ -76,6 +85,14 @@ class ISOserver(object):
                 f.write(kickstart)
 
             try:
+                if userdata.file:
+                    with open(userdata_path, "wb") as f:
+                        while True:
+                            data = userdata.file.read(8192)
+                            if not data:
+                                break
+                            f.write(data)
+
                 proc = Popen(['/usr/bin/mkisofs', '-b', 'isolinux/isolinux.bin', '-c', 'isolinux/boot.cat',
                               '-no-emul-boot', '-boot-load-size', '4', '-boot-info-table', '-J', '-R', '-V',
                               'kickstart_linux', '.'], stdout=PIPE, cwd=datadir)
@@ -86,9 +103,13 @@ class ISOserver(object):
                             break
                         yield data
             except Exception as e:
-                self.builder_semaphores[base_image].release()
                 raise
-            else:
+            finally:
+                if userdata_path:
+                    try:
+                        os.unlink(userdata_path)
+                    except FileNotFoundError:
+                        pass
                 self.builder_semaphores[base_image].release()
 
         return output
