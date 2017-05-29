@@ -16,7 +16,7 @@ class ISOserver(object):
 
     def _load_templates(self):
         with open("./main.html") as template_f:
-            self.template = Environment().from_string(template_f.read())
+            self.template = Environment(autoescape=True).from_string(template_f.read())
 
         samples = os.listdir("samples")
         self.samples = {}
