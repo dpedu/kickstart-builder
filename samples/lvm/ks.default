@@ -66,21 +66,128 @@ htop
 %post
 # Add arbitrary shell code to execute in the installer environment below here
 
-# run upgrades at first boot
+# Ubuntu user
+useradd --create-home --groups sudo --shell /bin/bash ubuntu
+echo "ubuntu:ubuntu" | chpasswd
+touch /home/ubuntu/.sudo_as_admin_successful
+
+
+# First time startup script
+cat <<"EOF" > /usr/local/sbin/vm-firstboot.sh
+#!/bin/bash
+set +x
+sed -i -E "s/^#?PermitRootLogin .+/PermitRootLogin yes/" /etc/ssh/sshd_config
+apt-get update
+apt-get dist-upgrade -y
+apt-get install -y open-vm-tools
+rm /etc/firstboot
+reboot
+EOF
+
+chmod +x /usr/local/sbin/vm-firstboot.sh
+# and systemd unit to call it
+cat <<"EOF" > /etc/systemd/system/vm-firstboot.service
+[Unit]
+Description=Initialize this template-created VM
+ConditionPathExists=/etc/firstboot
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/vm-firstboot.sh
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+ln -s /etc/systemd/system/vm-firstboot.service /etc/systemd/system/multi-user.target.wants/vm-firstboot.service
 touch /etc/firstboot
-sed -i -e "s/exit\s*0//" /etc/rc.local
-cat <<EOT >> /etc/rc.local
-# Below this line can be removed after first boot
-if [ -f /etc/firstboot ] ; then
-    set +e
-    sed -i -E "s/^PermitRootLogin .+/PermitRootLogin yes/" /etc/ssh/sshd_config
-    apt-get update
-    apt-get dist-upgrade -y
-    # Install new kernel on 14.04
-    #apt-get install -y linux-generic-lts-xenial open-vm-tools
-    # revert to upstart on 16.04
-    #apt-get install -y  upstart-sysv
-    rm /etc/firstboot
-    reboot
-fi
-EOT
+
+
+# Template cleanup helper script
+cat <<"EOF" > /usr/local/sbin/vm-clean.sh
+#!/bin/bash
+touch /etc/firstboot
+rm -f /etc/ssh/*key*
+rm -f /etc/machine-id
+EOF
+
+chmod +x /usr/local/sbin/vm-clean.sh
+
+
+# First boot ssh key regen
+cat <<"EOF" > /lib/systemd/system/ssh.service
+[Unit]
+Description=OpenBSD Secure Shell server
+After=network.target auditd.service
+ConditionPathExists=!/etc/ssh/sshd_not_to_be_run
+
+[Service]
+EnvironmentFile=-/etc/default/ssh
+ExecStartPre=/bin/bash -c "test -f /etc/ssh/ssh_host_rsa_key || ssh-keygen -A"
+ExecStartPre=/usr/sbin/sshd -t
+ExecStart=/usr/sbin/sshd -D $SSHD_OPTS
+ExecReload=/usr/sbin/sshd -t
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+Restart=on-failure
+RestartPreventExitStatus=255
+Type=notify
+RuntimeDirectory=sshd
+RuntimeDirectoryMode=0755
+
+[Install]
+WantedBy=multi-user.target
+Alias=sshd.service
+EOF
+
+
+
+# First boot machine uuidgen
+cat <<"EOF" > /etc/systemd/system/machineidgen.service
+[Unit]
+Description=Regen machine-id on first boot
+Before=systemd-networkd.service systemd-journald.service
+After=local-fs.target
+ConditionPathExists=!/etc/machine-id
+
+[Service]
+Type=oneshot
+ExecStart=/bin/systemd-machine-id-setup
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+ln -s /etc/systemd/system/machineidgen.service /etc/systemd/system/multi-user.target.wants/machineidgen.service
+rm /etc/machine-id
+
+
+# Show IP address on console
+cp /etc/issue /etc/issue.tpl
+
+cat <<"EOF" > /usr/local/sbin/console-set-ip.sh
+#!/bin/bash
+cat /etc/issue.tpl > /etc/issue
+(ip addr | grep inet | awk '{print $2}' | grep -vE '^(::|fe80|127\.0\.0)') 2>&1 >> /etc/issue
+echo "" >> /etc/issue
+EOF
+
+chmod +x /usr/local/sbin/console-set-ip.sh
+
+
+cat <<"EOF" > /etc/systemd/system/consoleip.service
+[Unit]
+Description=Display machine ip on console
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/console-set-ip.sh
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+ln -s /etc/systemd/system/consoleip.service /etc/systemd/system/multi-user.target.wants/consoleip.service
+
+rm -f /etc/update-motd.d/50-motd-news /etc/update-motd.d/80-livepatch

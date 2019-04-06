@@ -14,7 +14,7 @@ label custom_seed
   kernel /install/vmlinuz
   append initrd=/install/initrd.gz file=/cdrom/preseed/custom.seed --
 
-label minimap_vm
+label minimal_vm
   menu label ^Minimal VM
   kernel /install/vmlinuz
   append initrd=/install/initrd.gz file=/cdrom/preseed/ubuntu-server-minimalvm.seed --
