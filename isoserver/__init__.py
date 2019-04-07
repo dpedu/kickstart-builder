@@ -7,31 +7,41 @@ from threading import Semaphore
 import os
 
 
+APPROOT = os.path.abspath(os.path.join(os.path.dirname(__file__)))
+
+
 class ISOserver(object):
-    def __init__(self):
-        self.data_dir = "./iso_raws"
-        self.iso_selection = [i for i in os.listdir(self.data_dir) if not i.startswith(".")]
+    def __init__(self, isodir):
+        self.data_dir = isodir
+        self.iso_selection = [i for i in os.listdir(self.data_dir) if not any([i.startswith("."), i == "samples"])]
+        if not self.iso_selection:
+            raise Exception("No base isos found in path {}".format(self.data_dir))
+
         self.builder_semaphores = {i: Semaphore() for i in self.iso_selection}
         self._load_templates()
 
     def _load_templates(self):
-        with open("./main.html") as template_f:
+        with open(os.path.join(APPROOT, "main.html")) as template_f:
             self.template = Environment(autoescape=True).from_string(template_f.read())
 
-        samples = os.listdir("samples")
+        basedir = os.path.join(self.data_dir, "samples")
+        os.makedirs(basedir, exist_ok=True)
+        samples = os.listdir(basedir)
+        if not samples:
+            raise Exception("No templates found in path {}".format(basedir))
         self.samples = {}
 
         for item in samples:
             self.samples[item] = {}
-            with open(os.path.join("samples", item, "menu.default")) as f:
+            with open(os.path.join(basedir, item, "menu.default")) as f:
                 self.samples[item]["MENU_ENTRIES"] = f.read()
-            with open(os.path.join("samples", item, "seed.default")) as f:
+            with open(os.path.join(basedir, item, "seed.default")) as f:
                 self.samples[item]["SEED_CONTENT"] = f.read()
-            with open(os.path.join("samples", item, "ks.default")) as f:
+            with open(os.path.join(basedir, item, "ks.default")) as f:
                 self.samples[item]["KS_CONTENT"] = f.read()
-            info_path = os.path.join("samples", item, "info.txt")
+            info_path = os.path.join(basedir, item, "info.txt")
             if os.path.exists(info_path):
-                with open(os.path.join("samples", item, "info.txt")) as f:
+                with open(os.path.join(basedir, item, "info.txt")) as f:
                     self.samples[item]["SAMPLE_INFO"] = f.read()
 
     @cherrypy.expose
@@ -115,26 +125,28 @@ class ISOserver(object):
         return output
 
 
-if __name__ == '__main__':
+def main():
+    from argparse import ArgumentParser
+    import logging
+    logging.basicConfig(level=logging.DEBUG)
+    parser = ArgumentParser()
+    parser.add_argument("-p", "--port", help="listen port", default=int(os.environ.get("PORT", 8087)))
+    parser.add_argument("-d", "--data", help="iso data folder", default=os.environ.get("DATADIR", "/data"))
+    args = parser.parse_args()
+
+    cherrypy.tree.mount(ISOserver(args.data), '/', config={})
 
     cherrypy.config.update({
-        'engine.autoreload_on': False,
-        'tools.sessions.on': False,
-        'tools.sessions.storage_type': 'ram',  # 'file',
-        'tools.sessions.timeout': 525600,
-        'server.show.tracebacks': True,
-        'server.socket_port': 8087,
-        'server.thread_pool': 10,
+        'environment': 'production',
         'server.socket_host': '0.0.0.0',
-        # 'tools.sessions.storage_path': './sessions/',
-        'tools.sessions.locking': 'explicit'  # cherrypy.session.acquire_lock() cherrypy.session.release_lock()
+        'server.socket_port': args.port,
+        'tools.sessions.on': False,
+        'server.thread_pool': 10,
     })
 
-    cherrypy.tree.mount(ISOserver(), '/', config={
-        '/': {},
-        '/static': {  # 'tools.staticdir.on': True,
-                      # 'tools.staticdir.dir': ./static/"
-        }
-    })
     cherrypy.engine.start()
     cherrypy.engine.block()
+
+
+if __name__ == '__main__':
+    main()

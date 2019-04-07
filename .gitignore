@@ -1,0 +1,6 @@
+.DS_Store
+*.iso
+/isos/ubuntu-*
+/isoserver.egg-info/
+/testenv/
+__pycache__

@@ -57,3 +57,11 @@ Installing the `system-config-kickstart` provides a tool for generating Kickstar
 apt-get install system-config-kickstart
 system-config-kickstart
 ```
+
+
+Docker
+------
+
+Run the image like:
+
+* `docker run -it --rm -e PORT=8080 -v /host/iso_raws:/data kickstart`

@@ -1,0 +1,4 @@
+/iso_raws/*
+/isos/ubuntu-*
+*.iso
+/testenv
