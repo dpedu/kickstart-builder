@@ -1,0 +1,24 @@
+default install
+label install
+  menu label ^Manual install
+  kernel /install/vmlinuz
+  append  file=/cdrom/preseed/ubuntu-server.seed vga=788 initrd=/install/initrd.gz quiet --
+
+label on_disk_kickstart
+  menu label ^Install from kickstart + seed
+  kernel /install/vmlinuz
+  append initrd=/install/initrd.gz ks=cdrom:/ks.cfg file=/cdrom/preseed/custom.seed --
+
+label custom_seed
+  menu label ^Custom seed
+  kernel /install/vmlinuz
+  append initrd=/install/initrd.gz file=/cdrom/preseed/custom.seed --
+
+label minimal_vm
+  menu label ^Minimal VM
+  kernel /install/vmlinuz
+  append initrd=/install/initrd.gz file=/cdrom/preseed/ubuntu-server-minimalvm.seed --
+
+label memtest
+  menu label Test ^memory
+  kernel /install/mt86plus

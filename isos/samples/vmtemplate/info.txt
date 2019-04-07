@@ -1,0 +1,1 @@
+Install suitable for a cloneable vm image template. Resets instance-specific items such as host keys on first boot. Includes cleanup tools.
