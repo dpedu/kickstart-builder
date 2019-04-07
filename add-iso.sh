@@ -4,8 +4,8 @@ ISO_PATH="$1"
 ISO_NAME="$(basename $1 | sed -E 's/\.iso$//' )"
 
 
-mkdir iso_raws/$ISO_NAME
-cd iso_raws/$ISO_NAME
+mkdir isos/$ISO_NAME
+cd isos/$ISO_NAME
 
 bsdtar xfp $ISO_PATH
 
